@@ -123,6 +123,14 @@ class AlertEngine:
 
         return self.get_alerts()
 
+    def clear(self):
+        for alert in self.active_alerts.values():
+            alert.active = False
+            alert.resolved_at = datetime.now(timezone.utc)
+        self.active_alerts.clear()
+        self._pending.clear()
+        self.alert_history.clear()
+
     def get_alerts(self) -> list[Alert]:
         active = list(self.active_alerts.values())
         recent_resolved = [a for a in self.alert_history if not a.active][-10:]

@@ -1,4 +1,4 @@
-import { Card, Text, Stack, Badge } from '@mantine/core'
+import { Card, Text, Stack, Badge, Group, Button } from '@mantine/core'
 import { formatTime } from '../utils/formatters'
 
 const severityColor = {
@@ -7,18 +7,38 @@ const severityColor = {
   emergency: 'red',
 }
 
-export default function AlertPanel({ alerts }) {
+export default function AlertPanel({ alerts, onClear, clearing }) {
   if (!alerts || alerts.length === 0) {
     return (
       <Card padding="sm" radius="md" style={{ background: '#1a1b1e' }}>
-        <Text size="sm" c="dimmed">No alerts</Text>
+        <Group justify="space-between" align="center">
+          <Text size="sm" c="dimmed">No alerts</Text>
+          {onClear ? (
+            <Button size="compact-xs" variant="light" color="gray" disabled>
+              Clear
+            </Button>
+          ) : null}
+        </Group>
       </Card>
     )
   }
 
   return (
     <Card padding="sm" radius="md" style={{ background: '#1a1b1e', maxHeight: 250, overflowY: 'auto' }}>
-      <Text fw={600} size="sm" mb="xs">Alerts</Text>
+      <Group justify="space-between" mb="xs">
+        <Text fw={600} size="sm">Alerts</Text>
+        {onClear ? (
+          <Button
+            size="compact-xs"
+            variant="light"
+            color="red"
+            onClick={onClear}
+            loading={clearing}
+          >
+            Clear
+          </Button>
+        ) : null}
+      </Group>
       <Stack gap={6}>
         {alerts.map((a) => (
           <div

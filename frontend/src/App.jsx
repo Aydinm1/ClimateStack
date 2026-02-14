@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Stack, Text, Badge, Group, Button } from '@mantine/core'
 import { useWebSocket } from './hooks/useWebSocket'
 import DavisMap from './components/DavisMap'
@@ -10,6 +10,15 @@ import SorcererPanel from './components/SorcererPanel'
 import TopRiskList from './components/TopRiskList'
 import AlertPanel from './components/AlertPanel'
 import UserPage from './components/UserPage'
+import DashboardUserInsights from './components/DashboardUserInsights'
+import { clearAlerts } from './api'
+import {
+  computeProfile,
+  createDefaultAnswers,
+  normalizeAnswers,
+  DEFAULT_CHAT_MESSAGE,
+  buildInitialInsights,
+} from './utils/personalRisk'
 
 const appStyle = {
   width: '100vw',
@@ -43,16 +52,52 @@ const sidebarStyle = {
   borderLeft: '1px solid #2d2d2d',
 }
 
+const ANSWERS_STORAGE_KEY = 'davis-user-answers-v1'
+const MESSAGES_STORAGE_KEY = 'davis-user-messages-v1'
+
 export default function App() {
   const { data, connected } = useWebSocket()
   const [pathname, setPathname] = useState(window.location.pathname)
   const [heatThreshold, setHeatThreshold] = useState(95)
+  const [clearingAlerts, setClearingAlerts] = useState(false)
+  const [alertsOverride, setAlertsOverride] = useState(null)
+  const [userAnswers, setUserAnswers] = useState(() => {
+    try {
+      const raw = window.localStorage.getItem(ANSWERS_STORAGE_KEY)
+      return normalizeAnswers(raw ? JSON.parse(raw) : null)
+    } catch {
+      return createDefaultAnswers()
+    }
+  })
+  const [userMessages, setUserMessages] = useState(() => {
+    try {
+      const raw = window.localStorage.getItem(MESSAGES_STORAGE_KEY)
+      const parsed = raw ? JSON.parse(raw) : null
+      if (!Array.isArray(parsed)) {
+        return [{ role: 'assistant', text: DEFAULT_CHAT_MESSAGE }]
+      }
+      const valid = parsed.filter(
+        (m) =>
+          m &&
+          (m.role === 'assistant' || m.role === 'user') &&
+          typeof m.text === 'string'
+      )
+      if (!valid.length) {
+        return [{ role: 'assistant', text: DEFAULT_CHAT_MESSAGE }]
+      }
+      return valid
+    } catch {
+      return [{ role: 'assistant', text: DEFAULT_CHAT_MESSAGE }]
+    }
+  })
 
   const sensors = data?.sensors || []
   const risks = data?.risks || []
-  const alerts = data?.alerts || []
+  const liveAlerts = data?.alerts || []
+  const alerts = alertsOverride ?? liveAlerts
   const atmospheric = data?.atmospheric || null
   const scenario = data?.scenario || 'clear_day'
+  const profile = useMemo(() => computeProfile(userAnswers, risks), [userAnswers, risks])
   const isUserPage = pathname.startsWith('/user')
 
   useEffect(() => {
@@ -61,10 +106,55 @@ export default function App() {
     return () => window.removeEventListener('popstate', onPopState)
   }, [])
 
+  useEffect(() => {
+    window.localStorage.setItem(ANSWERS_STORAGE_KEY, JSON.stringify(userAnswers))
+  }, [userAnswers])
+
+  useEffect(() => {
+    window.localStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(userMessages))
+  }, [userMessages])
+
+  useEffect(() => {
+    setAlertsOverride(null)
+  }, [data?.tick])
+
   const navigate = (path) => {
     if (window.location.pathname === path) return
     window.history.pushState({}, '', path)
     setPathname(path)
+  }
+
+  const generateInsights = () => {
+    if (profile.unanswered) return
+    const insightMessages = buildInitialInsights(profile, risks)
+    if (!insightMessages.length) return
+    setUserMessages((prev) => [...prev, ...insightMessages])
+  }
+
+  const clearUserData = () => {
+    setUserAnswers(createDefaultAnswers())
+    setUserMessages([{ role: 'assistant', text: DEFAULT_CHAT_MESSAGE }])
+    try {
+      window.localStorage.removeItem(ANSWERS_STORAGE_KEY)
+      window.localStorage.removeItem(MESSAGES_STORAGE_KEY)
+    } catch {}
+  }
+
+  const handleClearAlerts = async () => {
+    if (clearingAlerts) return
+    setClearingAlerts(true)
+    try {
+      const result = await clearAlerts()
+      if (Array.isArray(result?.alerts)) {
+        setAlertsOverride(result.alerts)
+      } else {
+        setAlertsOverride([])
+      }
+    } catch {
+      // Keep existing alerts visible if clear request fails.
+    } finally {
+      setClearingAlerts(false)
+    }
   }
 
   return (
@@ -116,6 +206,12 @@ export default function App() {
           connected={connected}
           tick={data?.tick || 0}
           scenario={scenario}
+          answers={userAnswers}
+          setAnswers={setUserAnswers}
+          profile={profile}
+          messages={userMessages}
+          setMessages={setUserMessages}
+          onClearUserData={clearUserData}
         />
       ) : (
         <div style={mainStyle}>
@@ -127,10 +223,17 @@ export default function App() {
             <Stack gap={12}>
               <WeatherPanel />
               <ScenarioControls activeScenario={scenario} />
+              <DashboardUserInsights
+                profile={profile}
+                risks={risks}
+                messages={userMessages}
+                onOpenUser={() => navigate('/user')}
+                onGenerateInsights={generateInsights}
+              />
               <ThresholdControls heatThreshold={heatThreshold} setHeatThreshold={setHeatThreshold} />
               <SorcererPanel atmospheric={atmospheric} />
               <TopRiskList risks={risks} />
-              <AlertPanel alerts={alerts} />
+              <AlertPanel alerts={alerts} onClear={handleClearAlerts} clearing={clearingAlerts} />
             </Stack>
           </div>
         </div>

@@ -58,3 +58,8 @@ The dev server runs at `http://localhost:5173`.
 - **React 18** + **Vite** — frontend build
 - **Mantine 7** — UI components
 - **Mapbox GL / react-map-gl** — map rendering
+
+## Hackathon Assets
+
+- Pitch script and Q&A: `docs/HACKATHON_PITCH.md`
+- Live demo steps: `docs/DEMO_RUNBOOK.md`

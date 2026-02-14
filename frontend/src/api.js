@@ -20,6 +20,11 @@ export async function fetchAlerts() {
   return res.json()
 }
 
+export async function clearAlerts() {
+  const res = await fetch(`${BASE}/api/alerts/clear`, { method: 'POST' })
+  return res.json()
+}
+
 export async function fetchSorcerer() {
   const res = await fetch(`${BASE}/api/sorcerer`)
   return res.json()
