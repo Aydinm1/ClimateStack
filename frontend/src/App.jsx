@@ -171,7 +171,7 @@ export default function App() {
 
       <div style={{ padding: '8px 16px', background: '#1a1b1e', borderBottom: '1px solid #2d2d2d', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Group gap={8}>
-          <Text fw={700} size="lg">Davis Microclimate Safety Network</Text>
+          <Text fw={700} size="lg">MiClimate</Text>
           <Badge size="xs" color={connected ? 'green' : 'red'} variant="dot">
             {connected ? 'LIVE' : 'OFFLINE'}
           </Badge>

@@ -2,6 +2,34 @@
 
 A real-time microclimate monitoring and risk assessment dashboard for Davis, CA. The system simulates a network of 190 sensor nodes across 15 intersections, fusing sensor data with atmospheric priors to compute heat and fog risk scores and generate safety alerts.
 
+## MiClimate
+
+**MiClimate** is the project name for this microclimate safety platform.  
+The idea is simple: large weather alerts are too broad, but street-level microclimates can change quickly and create very different risks block by block.
+
+In California, this matters at scale:
+
+- Tule Fog affects about **20 counties** or around **13 million people**
+- Extreme Heat affects **all counties** or around **39.5 million people**
+
+### How MiClimate Works
+
+- A real-time system monitors custom-designed sensors across intersections
+- Raw weather inputs are translated into clear, actionable risk scores
+- Core sensing concept includes thermo + fog sensors mounted on traffic lights
+- Hardware pathway includes a potential radiation shield and solar panel for resilient field deployment
+
+### Why This Matters
+
+MiClimate is designed to convert noisy environmental signals into understandable safety guidance for drivers, cyclists, and pedestrians in real time.
+
+### Future Extension: ClimateSensor
+
+A related application, **ClimateSensor**, extends this approach into agriculture by combining:
+
+- pH sensing for soil/water condition tracking
+- temperature and fog implications for farm operations and crop risk monitoring
+
 ## Architecture
 
 - **Backend** — Python / FastAPI with WebSocket support for live updates
