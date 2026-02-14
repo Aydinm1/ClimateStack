@@ -1,6 +1,6 @@
 # Davis Microclimate Safety Network
 
-A real-time microclimate monitoring and risk assessment dashboard for Davis, CA. The system simulates a network of 60 sensor nodes across 15 intersections, fusing sensor data with atmospheric priors to compute heat and fog risk scores and generate safety alerts.
+A real-time microclimate monitoring and risk assessment dashboard for Davis, CA. The system simulates a network of 190 sensor nodes across 15 intersections, fusing sensor data with atmospheric priors to compute heat and fog risk scores and generate safety alerts.
 
 ## Architecture
 
